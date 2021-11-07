@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 
-# In[29]:
+# In[2]:
 
 
 # get all data
@@ -18,7 +18,7 @@ populations=pd.read_csv('CountyPopulations.csv')
 
 # ## FLORIDA
 
-# In[30]:
+# In[3]:
 
 
 names={' LA':'Louisiana', ' ID':'Idaho', ' CO':'Colorado', ' IL':'Illinois', ' OH':'Ohio' ,' PA':'Pennsylvania', ' SC':'South Carolina', ' FL':'Florida', ' NC':'North Carolina',
@@ -29,18 +29,17 @@ names={' LA':'Louisiana', ' ID':'Idaho', ' CO':'Colorado', ' IL':'Illinois', ' O
        ' CT':'Connecticut', ' WY':'Wyoming', ' HI':'Hawaii', ' IA':'Iowa', ' DE':'Delaware', ' SD':'South Dakota'}
 
 
-# In[31]:
+# In[4]:
 
 
-#fix deaths state
-state = deaths["State"].apply(lambda x: x.replace(x, names[x]))
-deaths["State"] = state
+state = deaths["State"].apply(lambda x: x.replace(x, names[x])) #updated state names from abbreviations to full names
+deaths["State"] = state  
 deaths['Year']=deaths['Year'].astype('int64')
 populations['County']=[i.split(' County')[0] for i in populations.County]
-deaths=deaths[deaths.State!='Alaska']
+deaths=deaths[deaths.State!='Alaska'] #removing Alaska per Nick's instructions
 
 
-# In[36]:
+# In[5]:
 
 
 lol=[]
@@ -51,84 +50,15 @@ for i in [i.split(' County') for i in deaths.County]:
     else:
         lol.append(i[0])
 deaths['County']=lol #removing the word county in column
-name={'Dona Ana':'Doña Ana', 'La Porte':'LaPorte', 'Mc Kean':'McKean'}
+name={'Dona Ana':'Doña Ana', 'La Porte':'LaPorte', 'Mc Kean':'McKean'} #renaming names similar to census data
 deaths['County']=[name[i] if i in name.keys() else i for i in deaths['County']]
 
 
-# In[37]:
+# In[6]:
 
 
 fldeaths = deaths[deaths.State == "Florida"][["State", "County", "Year", "Deaths"]]
-
-flcounties = [ #67 counties  def not the best way to do this lol
-    "Alachua",
-    "Baker",
-    "Bay",
-    "Bradford",
-    "Brevard",
-    "Broward",
-    "Calhoun",
-    "Charlotte",
-    "Citrus",
-    "Clay",
-    "Collier",
-    "Columbia",
-    "DeSoto",
-    "Dixie",
-    "Duval",
-    "Escambia",
-    "Flagler",
-    "Franklin",
-    "Gadsden",
-    "Gilchrist",
-    "Glades",
-    "Gulf",
-    "Hamilton",
-    "Hardee",
-    "Hendry",
-    "Hernando",
-    "Highlands",
-    "Hillsborough",
-    "Holmes",
-    "Indian River",
-    "Jackson",
-    "Jefferson",
-    "Lafayette",
-    "Lake",
-    "Lee",
-    "Leon",
-    "Levy",
-    "Liberty",
-    "Madison",
-    "Manatee",
-    "Marion",
-    "Martin",
-    "Miami-Dade",
-    "Monroe",
-    "Nassau",
-    "Okaloosa",
-    "Okeechobee",
-    "Orange",
-    "Osceola",
-    "Palm Beach",
-    "Pasco",
-    "Pinellas",
-    "Polk",
-    "Putnam",
-    "St. Johns",
-    "St. Lucie",
-    "Santa Rosa",
-    "Sarasota",
-    "Seminole",
-    "Sumter",
-    "Suwannee",
-    "Taylor",
-    "Union",
-    "Volusia",
-    "Wakulla",
-    "Walton",
-    "Washington",
-]
+flcounties = populations[populations.State=='Florida']['County'].unique() #67 counties  
 missing = []
 for j in range(2003, 2016):
     for i in flcounties:
@@ -139,8 +69,8 @@ for j in range(2003, 2016):
                 ["Florida", i, j, np.nan]
             )  # giving NA for the ones with no drugs stuff
 missing_dataframe = pd.DataFrame(missing, columns=["State", "County", "Year", "Deaths"])
-updated_deaths = pd.concat([fldeaths, missing_dataframe], axis=0)
-updated_deaths["Treatment"] = "Treatment"
+updated_deaths = pd.concat([fldeaths, missing_dataframe], axis=0)#contains all FL counties across the years. the ones with NA do not have any drug related deaths info
+updated_deaths["Treatment"] = "Treatment" #this new column is to make sure we know which state is the control or treatment group
 updated_deaths.groupby(["Year"])[
     "County"
 ].count()  # double checking that all florida counties are included
@@ -148,9 +78,10 @@ updated_deaths.groupby(["Year"])[
 
 # ## Texas 
 
-# In[38]:
+# In[7]:
 
 
+#similar analysis as Florida is done on Texas
 Txdeaths = deaths[deaths.State == "Texas"][["State", "County", "Year", "Deaths"]]
 Txcounties=populations[populations.State=='Texas']['County'].unique() #254 counties
 missing = []
@@ -172,9 +103,10 @@ updated_Tx.groupby(["Year"])[
 
 # ## Washington
 
-# In[39]:
+# In[8]:
 
 
+#similar analysis as Florida is done on Washington
 Wadeaths = deaths[deaths.State == "Washington"][["State", "County", "Year", "Deaths"]]
 Wacounties=populations[populations.State=='Washington']['County'].unique() #39 counties
 missing = []
@@ -194,83 +126,82 @@ updated_Wa.groupby(["Year"])[
 ].count()  # double checking that all Texas counties are included
 
 
-# In[40]:
+# # Adding the above info from the 3 states in one df
+
+# In[9]:
 
 
-treat_updated=pd.concat([updated_deaths,updated_Tx,updated_Wa],axis=0) #confirmed that the number of rows match expected counties
+treat_updated=pd.concat([updated_deaths,updated_Tx,updated_Wa],axis=0) #the number of rows are expected
 treat_updated
 
 
-# In[41]:
+# # Merging deaths and census data for Wa,Tx and FL
+
+# In[10]:
 
 
-treat_updated=treat_updated[treat_updated.Year>=2006]
-merge_deaths=pd.merge(treat_updated,populations,on=['State','County','Year'],how='left',validate="1:1",indicator=True) #validated
+treat_updated=treat_updated[treat_updated.Year>=2006] 
+merge_deaths=pd.merge(treat_updated,populations,on=['State','County','Year'],how='left',validate="1:1",indicator=True) 
 merge_deaths[merge_deaths['_merge']!='both'] # everything merged right
 
 
-# ## Dealing with County NAs without Deaths info!
+# ## Dealing with Nas from Counties with no mortality info.
 
-# In[42]:
-
-
-merge_deaths[merge_deaths.isnull().any(axis=1)].head()
-
-
-# In[43]:
+# In[11]:
 
 
 missing=[]
 for i in merge_deaths["Deaths"]:
     if pd.isna(i):
-        missing.append(np.random.randint(0,10)) #giving random number between 0 and 10
+        missing.append(np.random.randint(0,10)) #picking this way to randomly give a value between 0 and 10 deaths. we could decide on another better way later.
     else:
         missing.append(i)
-merge_deaths['Deaths']=missing#merge_deaths.loc[merge_deaths['Deaths'].notna(),]
-merge_deaths['death_prop']=merge_deaths['Deaths'].astype('float64')/merge_deaths['Population']
+merge_deaths['Deaths']=missing
+merge_deaths['death_prop']=merge_deaths['Deaths'].astype('float64')/merge_deaths['Population'] #calculates the death rate per county
 
 
-# In[44]:
+# In[12]:
 
 
 merge_deaths[merge_deaths.isnull().any(axis=1)]  #This confirms that there is now no deaths NA's in Texas,Washington and Florida 
 
 
-# In[45]:
+# In[13]:
 
 
 merge_deaths.head()
 
 
-# ## The rest of the country
+# ## The rest of the country states (will be our control group)
 
-# In[48]:
+# In[14]:
 
 
 rest_deaths=deaths.loc[~deaths['State'].isin(['Washington','Texas','Florida']),]
 rest_deaths=rest_deaths[rest_deaths.Year>=2006]
 restmerge=pd.merge(rest_deaths,populations,on=['State','County','Year'],how='left',indicator=True)
-restmerge[restmerge['_merge']!='both']#'County'].unique()
+restmerge[restmerge['_merge']!='both']# this looks for the rows that did't merge properly. Only District of Columbia pops up. 
 
 
-# In[50]:
+# In[15]:
 
 
 restmerge=restmerge.loc[restmerge['Deaths']!='MissingMissingMissingMissing',].copy()
+restmerge=restmerge.loc[restmerge.County!='District of Columbia'].copy()
 restmerge['Treatment']='Control'
 restmerge['death_prop']=restmerge['Deaths'].astype('float64')/restmerge['Population']
 restmerge=restmerge[['State','County','Year','Deaths','Population','death_prop','Treatment','_merge']]
 
 
-# In[51]:
+# In[16]:
 
 
-restmerge[restmerge.isnull().any(axis=1)] #only District columbia left we can deal with it later
+restmerge[restmerge.isnull().any(axis=1)] #No more Nas! yay!
 
 
-# In[58]:
+# In[17]:
 
 
-deaths_pop=pd.concat([merge_deaths,restmerge],axis=0)
-final=deaths_pop[['State','County','Year','Deaths','Population','Treatment','death_prop','_merge']].to_csv('deaths-pop-merge.csv')
+deaths_pop=pd.concat([merge_deaths,restmerge],axis=0) #putting treatment and control groups together
+final=deaths_pop[['State','County','Year','Deaths','Population','Treatment','death_prop']].to_csv('deaths-pop-merge.csv')
 
