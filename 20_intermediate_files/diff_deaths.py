@@ -1,106 +1,116 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %% [markdown]
+#!/usr/bin/env python
+# coding: utf-8
+
 # # Difference in Difference Deaths
 
-# %%
+# In[1]:
+
+
 import pandas as pd
 import numpy as np
-
-Deaths = pd.read_csv(
-    "/Users/clarissaache/IDS720/spaceX/pds2021-opioids-team-three/20_intermediate_files/deaths-pop-merge.csv"
-)
+Deaths = pd.read_csv('deaths-pop-merge.csv')
 Deaths
 
 
-# %%
-Deaths.loc[Deaths.State == "Florida", "Treatment"] = "Florida"
-Deaths.loc[Deaths.State == "Washington", "Treatment"] = "Washington"
-Deaths.loc[Deaths.State == "Texas", "Treatment"] = "Texas"
-Deaths.Treatment.value_counts()
+# ## For Florida
+
+# In[2]:
 
 
-# %%
-alt.data_transformers.disable_max_rows()
+states=['Washington','Texas'] 
+Floridadf=Deaths[~Deaths.State.isin(states)] # removing Washington and texas and keeping: Florida vs the rest of the country 
+pre_FL=Floridadf[(Floridadf.State=='Florida')&(Floridadf.Year<2010)] # filtering for pre policy years for Florida 
+post_FL=Floridadf[(Floridadf.State=='Florida')&(Floridadf.Year>=2010)] #post policy years for Florida
+pre_contr=Floridadf[(Floridadf.Treatment=='Control')&(Floridadf.Year<2010)] # pre policy years for all the other control states 
+post_contr=Floridadf[(Floridadf.Treatment=='Control')&(Floridadf.Year>=2010)] #post policy years for all the other control states
 
 
-# %%
-import altair as alt
+# In[3]:
 
-base = (
-    alt.Chart(Deaths)
-    .mark_point(clip=True)
-    .encode(
-        alt.X("Year", scale=alt.Scale(zero=False)),
-        alt.Y("death_prop", scale=alt.Scale(domain=(-0.5, 1.5))),
-        color="Treatment:N",
+
+from plotnine import *
+def diffIndiff(prepolicy_contr,postpolicy_contr,prepolicy_treatment,postpolicy_treatment,xvar,yvar,policyyear):
+    m=(
+    ggplot()
+    # plot all chosen states,  pre policy year
+    + geom_smooth(
+        prepolicy_contr,
+        aes(x=xvar, y=yvar,color="Treatment"),
+        method="lm",
     )
-)
-
-base + base.transform_loess("Year", "death_prop", groupby=["Treatment"]).mark_line()
-
-
-# %%
-Deaths_by_state = Deaths.groupby(
-    [Deaths["Year"], Deaths["Treatment"]], as_index=False
-).mean()
-Deaths_by_state
-
-
-# %%
-import altair as alt
-
-base = (
-    alt.Chart(Deaths_by_state)
-    .mark_point()
-    .encode(
-        alt.X("Year", scale=alt.Scale(zero=False)),
-        alt.Y("death_prop", scale=alt.Scale(zero=False)),
-        color="Treatment:N",
+    # plot all chosen states, post policy year
+    + geom_smooth(
+        postpolicy_contr,
+        aes(x=xvar, y=yvar,color="Treatment"),
+        method="lm",
     )
-)
-
-base + base.transform_loess("Year", "death_prop", groupby=["Treatment"]).mark_line()
-
-# %% [markdown]
-# Looks like this aggregation makes the policy makers in Texas and Florida look good.
-# Note that the differnces in rates are so very subtil from one year to the next
-
-# %%
-# lets try transforming the rate to log_rate
-Deaths["log_rate"] = np.log(Deaths["death_prop"])
-Deaths
-
-
-# %%
-base = (
-    alt.Chart(Deaths)
-    .mark_point(clip=True)
-    .encode(
-        alt.X("Year", scale=alt.Scale(zero=False)),
-        alt.Y("log_rate", scale=alt.Scale(domain=(-12, 5))),
-        color="Treatment:N",
+    # plot treatment, pre policy year
+    + geom_smooth(
+        prepolicy_treatment,
+        aes(x=xvar, y=yvar, color="Treatment"),
+        method="lm",
     )
-)
-
-base + base.transform_loess("Year", "log_rate", groupby=["Treatment"]).mark_line()
-
-# THOUGHTS:
-# so, in this graph we can see that death rates did not change much after policies went in effect
-# however, the explosion of the crisis in 2015 sort of did not affect Florida and Texas the way it did the rest of the states
-# (including Washington)
-
-
-# %%
-# SAME PLOT, THIS IS JUST A CLOSEUP VIEW
-base = (
-    alt.Chart(Deaths)
-    .mark_point(clip=True)
-    .encode(
-        alt.X("Year", scale=alt.Scale(zero=False)),
-        alt.Y("log_rate", scale=alt.Scale(domain=(-12, -5))),
-        color="Treatment:N",
+    # plot treatment, post policy year
+    + geom_smooth(
+        postpolicy_treatment,
+        aes(x=xvar, y=yvar, color="Treatment"),
+        method="lm",
     )
-)
+    + geom_vline(xintercept=policyyear, linetype="dotted")
+    + xlab("Year")
+    + ylab("Mortality rate")
+    + theme_classic(base_family="Times")
+    + scale_x_continuous(breaks=[2006, 2008, 2010, 2012,2014], limits=[2006, 2014])
+    )
+    return m
 
-base + base.transform_loess("Year", "log_rate", groupby=["Treatment"]).mark_line()
+
+# In[5]:
+
+
+m=diffIndiff(pre_contr,post_contr,pre_FL,post_FL,'Year','death_prop',2010)+ labs(title="Mortality rate for Florida vs. Other States", color="State")
+#ggsave(plot=m,filename='Mortality-rate-FL.png')
+m
+
+
+# # Washington
+
+# In[6]:
+
+
+states=['Florida','Texas']
+Wadf=Deaths[~Deaths.State.isin(states)] # removing Florida and texas and keeping Washington vs the rest of the country 
+pre_Wa=Wadf[(Wadf.State=='Washington')&(Wadf.Year<2012)]
+post_Wa=Wadf[(Wadf.State=='Washington')&(Wadf.Year>=2012)]
+pre_contr=Wadf[(Wadf.Treatment=='Control')&(Wadf.Year<2012)]
+post_contr=Wadf[(Wadf.Treatment=='Control')&(Wadf.Year>=2012)]
+
+
+# In[7]:
+
+
+m=diffIndiff(pre_contr,post_contr,pre_Wa,post_Wa,'Year','death_prop',2012)+ labs(title="Mortality rate for Washington vs. Other States", color="Treatment")
+#ggsave(plot=m,filename='Mortality-rate-Wa.png')
+m
+
+
+# ## Texas
+
+# In[8]:
+
+
+states=['Florida','Washington']
+Txdf=Deaths[~Deaths.State.isin(states)] # removing Florida and Washington and keeping Washington vs the rest of the country 
+pre_Tx=Txdf[(Txdf.State=='Texas')&(Txdf.Year<2007)]
+post_Tx=Txdf[(Txdf.State=='Texas')&(Txdf.Year>=2007)]
+pre_contr=Txdf[(Txdf.Treatment=='Control')&(Txdf.Year<2007)]
+post_contr=Txdf[(Txdf.Treatment=='Control')&(Txdf.Year>=2007)]
+
+
+# In[9]:
+
+
+m=diffIndiff(pre_contr,post_contr,pre_Tx,post_Tx,'Year','death_prop',2007)+ labs(title="Mortality rate for Texas vs. Other States", color="Treatment")
+#ggsave(plot=m,filename='Mortality-rate-Tx.png') #saves it as a png 
+m
+
