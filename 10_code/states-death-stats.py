@@ -9,7 +9,7 @@ import numpy as np
 import os
 
 
-# In[26]:
+# In[73]:
 
 
 userhome = os.path.expanduser('~')
@@ -45,7 +45,7 @@ deaths=pd.DataFrame(rows,columns=['Notes', 'County', 'County Code', 'Year', 'Yea
        'Deaths']]
 
 
-# In[66]:
+# In[74]:
 
 
 deaths1=deaths.groupby(['County', 'County Code', 'Year'])['Deaths'].sum().reset_index()
@@ -53,8 +53,26 @@ deaths1['State']=[i.split(',')[1] for i in deaths1.County]
 deaths1['County']=[i.split(',')[0] for i in deaths1.County]
 
 
-# In[15]:
+# In[81]:
+
+
+deaths1.State.unique()
+
+
+# In[87]:
+
+
+deaths1.head()
+
+
+# In[68]:
 
 
 deaths1= deaths1.to_csv("deaths.csv", index=False)
+
+
+# In[ ]:
+
+
+
 
