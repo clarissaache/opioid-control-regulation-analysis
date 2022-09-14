@@ -1,9 +1,7 @@
 ## Summary 
 
-With the opioid crisis being an important health, economic and societal burden for the US, this project analyzes the effectiveness of a series of policies that intended to control the opioid crisis between 2005 and 2015. This project analyzes: <br>
-(1) opioid availability for prescriptions, and <br>
-(2) mortality rates <br>
-in 3 states: Texas, Washington, and Florida, which had policy interventions designed to limit the over-prescription of opioids between 2005 and 2015. <br>
+With the opioid crisis being an important health, economic and societal burden for the US, this project analyzes the effectiveness of a series of policies that intended to control the opioid crisis between 2005 and 2015. This project analyzes two metrics: (1) opioid availability for prescriptions, and
+(2) mortality rates in 3 states: Texas, Washington, and Florida, which had policy interventions designed to limit the over-prescription of opioids between 2005 and 2015. <br>
 To analyze the effect of the policies, a Pre-Post Comparison and a Difference-in-Difference causal inference techniques are evaluated.
 
 ## Findings
