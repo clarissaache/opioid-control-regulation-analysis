@@ -1,6 +1,6 @@
-# Summary 
+## Summary 
 
-With the opioid crisis being an important health, economic and societal burden for the US, this project analyzes the effectiveness of a series of policies that intended to control the opioid crisis between 2005 and 2015. This project analyzes:
+With the opioid crisis being an important health, economic and societal burden for the US, this project analyzes the effectiveness of a series of policies that intended to control the opioid crisis between 2005 and 2015. This project analyzes: \n
 (1) opioid availability for prescriptions, and 
 (2) mortality rates 
 in 3 states: Texas, Washington, and Florida, which had policy interventions designed to limit the over-prescription of opioids between 2005 and 2015. 
